@@ -33,9 +33,9 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // matriz
-int numModel = 0;
-float baseX = 0.0f;
-int mutex = 0;
+int idModel = 0;
+int idCam = 0;
+float currentTime = 0.0, lastTime = 0.0;
 
 int main()
 {
@@ -93,262 +93,322 @@ int main()
 
 	// ---------------------------- moved
 	// render the loaded model
-	glm::mat4 model;
-	model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
-
-	// render the loaded model ADICIONADO
-	//glm::mat4 model, model2, model3, matrixModel[10];
-	//matrixModel[numModel] = glm::translate(matrixModel[0], glm::vec3(-1.0f, -1.0f, 0.0f)); // translate it down so it's at the center of the scene
-	//matrixModel[numModel] = glm::scale(matrixModel[0], glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
-	//numModel++;
-	//matrixModel[numModel] = glm::translate(matrixModel[1], glm::vec3(0.5f, -1.0f, 0.0f));
-	//matrixModel[numModel] = glm::scale(matrixModel[1], glm::vec3(0.1f, 0.1f, 0.1f));
-	//numModel++;
+	vector <glm::mat4> matrixModel;
+	matrixModel.push_back(glm::mat4(1.0));
+	matrixModel.back() = glm::translate(matrixModel.back(), glm::vec3(0.0f, -1.0f, 0.0f)); // translate it down so it's at the center of the scene
+	matrixModel.back() = glm::scale(matrixModel.back(), glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
+	idModel = (matrixModel.size() - 1);
 	// ---------------------------- moved
+
+	//glm::mat4 projection, view;
+	vector <glm::mat4> matrixProjection, matrixView;
+	matrixProjection.push_back(glm::mat4(1.0));
+	matrixView.push_back(glm::mat4(1.0));
+	matrixProjection.push_back(glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f));
+	matrixView.push_back(camera.GetViewMatrix());
+	idCam=0;
+
+
+
 
     // render loop
     // -----------
-    while (!glfwWindowShouldClose(window))
-    {
-		
-        // per-frame time logic
-        // --------------------
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+	while (!glfwWindowShouldClose(window))
+	{
 
-        // input
-        // -----
-        processInput(window); // verifica a entrada de dados na janela
+		// per-frame time logic
+		// --------------------
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 
-        // render
-        // ------
-        glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
+		currentTime = glfwGetTime();
 
-        // don't forget to enable shader before setting uniforms
-        ourShader.use();
+		// input
+		// -----
+		processInput(window); // verifica a entrada de dados na janela
 
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+		// render
+		// ------
+		glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
 
-        // render the loaded model
-        //glm::mat4 model;
-        //model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
-        //model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
+		// don't forget to enable shader before setting uniforms
+		ourShader.use();
 
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			model = glm::translate(model, glm::vec3(-0.2f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			model = glm::translate(model, glm::vec3(0.2f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			model = glm::translate(model, glm::vec3(0.0f, 0.2f, 0.0f)); // translate it down so it's at the center of the scene
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			model = glm::translate(model, glm::vec3(0.0f, -0.2f, 0.0f)); // translate it down so it's at the center of the scene
-		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-			model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.5f)); // translate it down so it's at the center of the scene
-		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-			model = glm::translate(model, glm::vec3(0.0f, 0.0f, -0.5f)); // translate it down so it's at the center of the scene
-		if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+		// view/projection transformations
+		matrixProjection[idCam] = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		matrixView[idCam] = camera.GetViewMatrix();
+		std::cout << "camera:" << idCam << endl;
 
+
+		ourShader.setMat4("projection", matrixProjection[idCam]);
+		ourShader.setMat4("view", matrixView[idCam]);
+
+		//for (int i = 0; i < matrixModel.size(); i++) {
+			//ourShader.setMat4("model", matrixModel[i]);
+			//ourModel.Draw(ourShader);
+		//}
+
+		// render the loaded model
+		//glm::mat4 model;
+		//model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // translate it down so it's at the center of the scene
+		//model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
+
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // translacao -x
+			matrixModel[idModel] = glm::translate(matrixModel[idModel], glm::vec3(-0.2f, 0.0f, 0.0f)); 
+
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // translacao +x
+			matrixModel[idModel] = glm::translate(matrixModel[idModel], glm::vec3(0.2f, 0.0f, 0.0f)); 
+
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // translacao +y
+			matrixModel[idModel] = glm::translate(matrixModel[idModel], glm::vec3(0.0f, 0.2f, 0.0f)); 
+
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // translacao -y
+			matrixModel[idModel] = glm::translate(matrixModel[idModel], glm::vec3(0.0f, -0.2f, 0.0f)); 
+
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // translacao +z
+			matrixModel[idModel] = glm::translate(matrixModel[idModel], glm::vec3(0.0f, 0.0f, 0.5f)); 
+
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // translacao -z
+			matrixModel[idModel] = glm::translate(matrixModel[idModel], glm::vec3(0.0f, 0.0f, -0.5f)); 
+
+		if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) { // rotacao x com tempo
 			//model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.1f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-
 			double step, delta, tempoDefinido = 5, tempoAtual, tempoInicial = glfwGetTime();
 			do {
 
 				tempoAtual = glfwGetTime();
 				delta = tempoAtual - tempoInicial;
 				step = (0.002 * delta) / tempoDefinido;
-				model = glm::rotate(model, glm::radians(1.0f),glm::vec3( 0.1f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+				matrixModel[idModel] = glm::rotate(matrixModel[idModel], glm::radians(1.0f), glm::vec3(0.1f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-				ourShader.setMat4("model", model);
-				ourModel.Draw(ourShader);
+
+				for (int i = 0; i < matrixModel.size(); i++) {
+					ourShader.setMat4("model", matrixModel[i]);
+					ourModel.Draw(ourShader);
+				}
+
 				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
 				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
-
 			} while (tempoAtual <= (tempoInicial + tempoDefinido));
-
-		}
-		if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
-			model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 0.1f, 0.0f)); 
-
-		/*	double step, delta, tempoDefinido = 5, tempoAtual, tempoInicial = glfwGetTime();
-			do {
-
-				tempoAtual = glfwGetTime();
-				delta = tempoAtual - tempoInicial;
-				step = (0.002 * delta) / tempoDefinido;
-				model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 0.1f, 0.0f)); // translate it down so it's at the center of the scene
-				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-				ourShader.setMat4("model", model);
-				ourModel.Draw(ourShader);
-				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
-				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
-
-
-			} while (tempoAtual <= (tempoInicial + tempoDefinido)); */
 		}
 
-		if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
-			model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 0.1f)); 
+		if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) { // rotacao y via key
+			matrixModel[idModel] = glm::rotate(matrixModel[idModel], glm::radians(1.0f), glm::vec3(0.0f, 0.1f, 0.0f));
+			/*	double step, delta, tempoDefinido = 5, tempoAtual, tempoInicial = glfwGetTime();
+				do {
 
-		/*	double step, delta, tempoDefinido = 5, tempoAtual, tempoInicial = glfwGetTime();
-			do {
+					tempoAtual = glfwGetTime();
+					delta = tempoAtual - tempoInicial;
+					step = (0.002 * delta) / tempoDefinido;
+					model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 0.1f, 0.0f)); // translate it down so it's at the center of the scene
+					glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
 
-				tempoAtual = glfwGetTime();
-				delta = tempoAtual - tempoInicial;
-				step = (0.002 * delta) / tempoDefinido;
-				model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 0.1f)); // translate it down so it's at the center of the scene
-				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-				ourShader.setMat4("model", model);
-				ourModel.Draw(ourShader);
-				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
-				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
+					for (int i = 0; i < matrixModel.size(); i++) {
+						ourShader.setMat4("model", matrixModel[i]);
+						ourModel.Draw(ourShader);
+					}
 
-
-			} while (tempoAtual <= (tempoInicial + tempoDefinido)); */
-
+					glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
+					glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
+				} while (tempoAtual <= (tempoInicial + tempoDefinido)); */
 		}
-		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+
+		if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) { // rotacao z via key
+			matrixModel[idModel] = glm::rotate(matrixModel[idModel], glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 0.1f));
+			/*	double step, delta, tempoDefinido = 5, tempoAtual, tempoInicial = glfwGetTime();
+				do {
+
+					tempoAtual = glfwGetTime();
+					delta = tempoAtual - tempoInicial;
+					step = (0.002 * delta) / tempoDefinido;
+					model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 0.1f)); // translate it down so it's at the center of the scene
+					glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
+
+					for (int i = 0; i < matrixModel.size(); i++) {
+						ourShader.setMat4("model", matrixModel[i]);
+						ourModel.Draw(ourShader);
+					}
+
+					glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
+					glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
+				} while (tempoAtual <= (tempoInicial + tempoDefinido)); */
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) { // ativa wirwframe
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 		}
-		if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+
+		if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) { // desativa wirwframe
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 		}
-		// difença entre vetor e camera
-		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-					
+
+		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) { // difença entre vetor e camera
 			glm::vec3 dotMod(1.0f, 0.0f, 0.0f); //cameraTarget
 			glm::vec3 direction = glm::normalize(camera.Position - dotMod);
 			std::cout << "Angulo diferenca camera e modelo: " << std::endl;
-			std::cout << "X: " <<  direction.x <<" "<< "Y: " << direction.y << " " << "Z: " << direction.z<< std::endl;
-		
+			std::cout << "X: " << direction.x << " " << "Y: " << direction.y << " " << "Z: " << direction.z << std::endl;
 		}
-		//animacao
-		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+
+		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) { 		//animacao????????
+
 
 			double step, delta, tempoDefinido = 5, tempoAtual, tempoInicial = glfwGetTime();
 
-			do { 
+			do {
 
 				tempoAtual = glfwGetTime();
 				delta = tempoAtual - tempoInicial;
-				step = (0.002 * delta)/ tempoDefinido;
-				model = glm::translate(model, glm::vec3(step, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+				step = (0.002 * delta) / tempoDefinido;
+				matrixModel[idModel] = glm::translate(matrixModel[idModel], glm::vec3(step, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-				ourShader.setMat4("model", model);
-				ourModel.Draw(ourShader);
+
+				for (int i = 0; i < matrixModel.size(); i++) {
+					ourShader.setMat4("model", matrixModel[i]);
+					ourModel.Draw(ourShader);
+				}
+
 				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
 				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
 
 			} while (tempoAtual <= (tempoInicial + tempoDefinido));
-		
-		}	
-		// new
-		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
 
-			if (mutex == 0) {
-			
-				mutex = 1;
-
-				//matrixModel[numModel] = glm::translate(matrixModel[numModel], glm::vec3(baseX, -1.0f, 0.0f));
-				baseX = baseX + 1.0;
-				//matrixModel[numModel] = glm::scale(matrixModel[numModel], glm::vec3(0.1f, 0.1f, 0.1f));
-				numModel++;
-				std::cout << "mutex" << mutex << std::endl;
-
-				std::cout << "numModel" << numModel << std::endl;
-				std::cout << "baseX" << baseX << std::endl;
-
-				mutex = 0;
-			}
 		}
-		// exclui
+		
+		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS && (currentTime-lastTime) > 1) { //new
+			matrixModel.push_back(glm::mat4(1.0));
+			matrixModel.back() = glm::translate(matrixModel.back(), glm::vec3(0.0f, -1.0f, 0.0f)); // translate it down so it's at the center of the scene
+			matrixModel.back() = glm::scale(matrixModel.back(), glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
+			lastTime = currentTime;
+			idModel = (matrixModel.size()-1);
+		}
+		
+		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && (currentTime - lastTime) > 1) { //idModel ++
+			if ((idModel+1) >= matrixModel.size()) {			
+				idModel = 0;			}
+			else {
+				idModel++;
+			}
+			lastTime = currentTime;
+		}
+	
+		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS && (currentTime - lastTime) > 1) { //idModel --
+			if ((idModel-1) <= 0) {
+				idModel = matrixModel.size()-1;
+			}
+			else {
+				idModel--;
+			}
+			lastTime = currentTime;
+		}
+
 		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
 
 
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
-		/*	int detect, gm;
-			double i, t;
-			float x[4] = {100,200,300,400}; // posições bezier x
-			float y[4] = {400,300,200,100}; // posições bezier y
+				int detect, gm;
+				double i, t;
+				float x[4] = {100,200,300,400}; // posições bezier x
+				float y[4] = {400,300,200,100}; // posições bezier y
 
-			for (t = 0.0; t < 1.0; t += 0.0005) {
-				float xt = pow(1 - t, 3)*x[0] + 3 * t*pow(1 - t, 2)*x[1] + 3 * pow(t, 2)*(1 - t)*x[2] + pow(t, 3)*x[3];
-				float yt = pow(1 - t, 3)*y[0] + 3 * t*pow(1 - t, 2)*y[1] + 3 * pow(t, 2)*(1 - t)*y[2] + pow(t, 3)*y[3];
-				model = glm::translate(model, glm::vec3(xt, yt, 0.0f)); // translate it down so it's at the center of the scene
-				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-				ourShader.setMat4("model", model);
-				ourModel.Draw(ourShader);
-				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
-				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
+				for (t = 0.0; t < 1.0; t += 0.0005) {
+					float xt = pow(1 - t, 3)*x[0] + 3 * t*pow(1 - t, 2)*x[1] + 3 * pow(t, 2)*(1 - t)*x[2] + pow(t, 3)*x[3];
+					float yt = pow(1 - t, 3)*y[0] + 3 * t*pow(1 - t, 2)*y[1] + 3 * pow(t, 2)*(1 - t)*y[2] + pow(t, 3)*y[3];
+					//model = glm::translate(model, glm::vec3(xt, yt, 0.0f)); // translate it down so it's at the center of the scene
+					glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
+					//ourShader.setMat4("model", model);
+					ourModel.Draw(ourShader);
+					glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
+					glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
 
-			}
-			*/
+				}
+				
+				/*
+				//pego a posicão atual do modelo
+				/*glm::vec3 posicao_atual(model[0], model[1], model[2]), bezier[3];
+				vetor axiliar
+				glm::vec3 translacao(0, 0, 0);
+				glm::vec3 novo_ponto(0, 0, 0);
+				bezier[0] = posicao_atual;
+				bezier[1][0] = 200;
+				bezier[1][1] = 300;
+				bezier[1][2] = 0;
+				bezier[2][0] = 300;
+				bezier[2][1] = 200;
+				bezier[2][2] = 0;
 
-			//pego a posicão atual do modelo
-			glm::vec3 posicao_atual(model[0], model[1], model[2]), bezier[3];
-			//vetor axiliar
-			glm::vec3 translacao(0, 0, 0);
-			glm::vec3 novo_ponto(0, 0, 0);
-			bezier[0] = posicao_atual;
-			bezier[1][0] = 200;
-			bezier[1][1] = 300;
-			bezier[1][2] = 0;
-			bezier[2][0] = 300;
-			bezier[2][1] = 200;
-			bezier[2][2] = 0;
+				for (double i = 0; i < 1; i += 0.001) {
+					glm::vec3 aux1, aux2, aux3;
+					aux1 = pow(glm::vec3(1 - i), glm::vec3(2)) * bezier[0];
+					aux2 = (glm::vec3(2 * i*(1 - i))) * bezier[1];
+					aux3 = glm::vec3(pow(i, 2)) * bezier[2];
+					novo_ponto = aux1 + aux2 + aux3;
 
-			for (double i = 0; i < 1; i += 0.001) {
-				glm::vec3 aux1, aux2, aux3;
-				aux1 = pow(glm::vec3(1 - i), glm::vec3(2)) * bezier[0];
-				aux2 = (glm::vec3(2 * i*(1 - i))) * bezier[1];
-				aux3 = glm::vec3(pow(i, 2)) * bezier[2];
-				novo_ponto = aux1 + aux2 + aux3;
+					translacao = novo_ponto - posicao_atual;
+					model = translate(model,translacao);
+					posicao_atual += translacao;
+					glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
+					ourShader.setMat4("model", model);
+					ourModel.Draw(ourShader);
+					glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
+					glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
 
-				translacao = novo_ponto - posicao_atual;
-				model = translate(model,translacao);
-				posicao_atual += translacao;
-				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-				ourShader.setMat4("model", model);
-				ourModel.Draw(ourShader);
-				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
-				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
+				}
+				*/
 
-			}
-
-			
 		}
 		if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
 
 
 		}
 
-		ourShader.setMat4("model", model);
+		//if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS  && (currentTime - lastTime) > 1) { //new
+
+			matrixProjection.push_back(glm::mat4(1.0));
+			matrixView.push_back(glm::mat4(1.0));
+			lastTime = currentTime;
+			idCam = (matrixProjection.size() - 1);
+			matrixProjection.push_back(glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f));
+			matrixView.push_back(camera.GetViewMatrix());
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS && (currentTime - lastTime) > 1) { //idCam ++
+			if ((idCam + 1) >= matrixProjection.size()) {
+				idCam = 0;
+			}
+			else {
+				idCam++;
+			}
+			lastTime = currentTime;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS && (currentTime - lastTime) > 1) { //idCam --
+			if ((idCam - 1) <= 0) {
+				idCam = matrixProjection.size() - 1;
+			}
+			else {
+				idCam--;
+			}
+			lastTime = currentTime;
+		}
+
+		//printar objetos
+		//ourShader.setMat4("model", model);
+		//ourModel.Draw(ourShader);
+		for (int i = 0; i < matrixModel.size(); i++) {
+		ourShader.setMat4("model", matrixModel[i]);
 		ourModel.Draw(ourShader);
-
-
-		// printar objetos
-		//for (int i = 0; i < numModel; i++) {
-
-			//ourShader.setMat4("model", matrixModel[i]);
-			//ourModel.Draw(ourShader);
-
-		//}
+		}	
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -368,7 +428,6 @@ void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // verifica naquele meio de comunicaçao se determinado evento foi acionado
         glfwSetWindowShouldClose(window, true);
-
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)

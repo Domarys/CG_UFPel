@@ -100,13 +100,11 @@ int main()
 	idModel = (matrixModel.size() - 1);
 	// ---------------------------- moved
 
-	//glm::mat4 projection, view;
-	vector <glm::mat4> matrixProjection, matrixView;
-	matrixProjection.push_back(glm::mat4(1.0));
-	matrixView.push_back(glm::mat4(1.0));
-	matrixProjection.push_back(glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f));
-	matrixView.push_back(camera.GetViewMatrix());
-	idCam=0;
+	// view/projection transformations
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = camera.GetViewMatrix();
+	ourShader.setMat4("projection", projection);
+	ourShader.setMat4("view", view);
 
 
 
@@ -137,13 +135,13 @@ int main()
 		ourShader.use();
 
 		// view/projection transformations
-		matrixProjection[idCam] = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		matrixView[idCam] = camera.GetViewMatrix();
+		projection= glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		view = camera.GetViewMatrix();
 		std::cout << "camera:" << idCam << endl;
 
 
-		ourShader.setMat4("projection", matrixProjection[idCam]);
-		ourShader.setMat4("view", matrixView[idCam]);
+		ourShader.setMat4("projection", projection);
+		ourShader.setMat4("view", view);
 
 		//for (int i = 0; i < matrixModel.size(); i++) {
 			//ourShader.setMat4("model", matrixModel[i]);
@@ -371,7 +369,7 @@ int main()
 
 		}
 
-		//if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+	/*	//if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
 		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS  && (currentTime - lastTime) > 1) { //new
 
 			matrixProjection.push_back(glm::mat4(1.0));
@@ -400,7 +398,7 @@ int main()
 				idCam--;
 			}
 			lastTime = currentTime;
-		}
+		}*/
 
 		//printar objetos
 		//ourShader.setMat4("model", model);

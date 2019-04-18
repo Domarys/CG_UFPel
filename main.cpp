@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/spline.hpp>
 
 #include <learnopengl/filesystem.h>
 #include <learnopengl/shader_m.h>
@@ -23,7 +24,8 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+//Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+vector <Camera> matrixCam;
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -101,12 +103,13 @@ int main()
 	// ---------------------------- moved
 
 	// view/projection transformations
-	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	glm::mat4 view = camera.GetViewMatrix();
+	Camera cam = glm::vec3(0.0f, 0.0f, 3.0f);
+	matrixCam.push_back(cam);
+	glm::mat4 projection = glm::perspective(glm::radians(matrixCam[0].Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = matrixCam[0].GetViewMatrix();
 	ourShader.setMat4("projection", projection);
 	ourShader.setMat4("view", view);
-
-
+	float bez = 0.0;
 
 
     // render loop
@@ -135,8 +138,8 @@ int main()
 		ourShader.use();
 
 		// view/projection transformations
-		projection= glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		view = camera.GetViewMatrix();
+		projection= glm::perspective(glm::radians(matrixCam[idCam].Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		view = matrixCam[idCam].GetViewMatrix();
 		std::cout << "camera:" << idCam << endl;
 
 
@@ -247,7 +250,7 @@ int main()
 
 		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) { // difença entre vetor e camera
 			glm::vec3 dotMod(1.0f, 0.0f, 0.0f); //cameraTarget
-			glm::vec3 direction = glm::normalize(camera.Position - dotMod);
+			glm::vec3 direction = glm::normalize(matrixCam[0].Position - dotMod);
 			std::cout << "Angulo diferenca camera e modelo: " << std::endl;
 			std::cout << "X: " << direction.x << " " << "Y: " << direction.y << " " << "Z: " << direction.z << std::endl;
 		}
@@ -310,58 +313,43 @@ int main()
 
 		}
 
-		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
-				int detect, gm;
-				double i, t;
-				float x[4] = {100,200,300,400}; // posições bezier x
-				float y[4] = {400,300,200,100}; // posições bezier y
+		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && (currentTime - lastTime) > 1) {
+			double step, delta, tempoInicial=glfwGetTime();
 
-				for (t = 0.0; t < 1.0; t += 0.0005) {
-					float xt = pow(1 - t, 3)*x[0] + 3 * t*pow(1 - t, 2)*x[1] + 3 * pow(t, 2)*(1 - t)*x[2] + pow(t, 3)*x[3];
-					float yt = pow(1 - t, 3)*y[0] + 3 * t*pow(1 - t, 2)*y[1] + 3 * pow(t, 2)*(1 - t)*y[2] + pow(t, 3)*y[3];
-					//model = glm::translate(model, glm::vec3(xt, yt, 0.0f)); // translate it down so it's at the center of the scene
-					glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-					//ourShader.setMat4("model", model);
-					ourModel.Draw(ourShader);
-					glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
-					glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
 
+			do {
+				currentTime = glfwGetTime();
+				delta = currentTime - lastTime;
+				step = (0.002 * delta) / 5;
+				std::cout << "aaaaaaaallllllllllllllloooooooooooo" << endl;
+				if (bez <= 1.0) {
+					glm::vec3 b = glm::catmullRom(
+						glm::vec3(matrixModel[idModel][0][0], matrixModel[idModel][1][1] - 5, matrixModel[idModel][2][2]),
+						glm::vec3(matrixModel[idModel][0][0], matrixModel[idModel][1][1], matrixModel[idModel][0][0]),
+						glm::vec3(matrixModel[idModel][0][0] + 1.0, matrixModel[idModel][1][1], matrixModel[idModel][2][2]),
+						glm::vec3(matrixModel[idModel][0][0], matrixModel[idModel][1][1], matrixModel[idModel][2][2]),
+						bez);
+					matrixModel[idModel][3][0] = b.x;
+					matrixModel[idModel][3][1] = b.y;
+					matrixModel[idModel][3][2] = b.z;
+					bez += 0.001;
 				}
-				
-				/*
-				//pego a posicão atual do modelo
-				/*glm::vec3 posicao_atual(model[0], model[1], model[2]), bezier[3];
-				vetor axiliar
-				glm::vec3 translacao(0, 0, 0);
-				glm::vec3 novo_ponto(0, 0, 0);
-				bezier[0] = posicao_atual;
-				bezier[1][0] = 200;
-				bezier[1][1] = 300;
-				bezier[1][2] = 0;
-				bezier[2][0] = 300;
-				bezier[2][1] = 200;
-				bezier[2][2] = 0;
-
-				for (double i = 0; i < 1; i += 0.001) {
-					glm::vec3 aux1, aux2, aux3;
-					aux1 = pow(glm::vec3(1 - i), glm::vec3(2)) * bezier[0];
-					aux2 = (glm::vec3(2 * i*(1 - i))) * bezier[1];
-					aux3 = glm::vec3(pow(i, 2)) * bezier[2];
-					novo_ponto = aux1 + aux2 + aux3;
-
-					translacao = novo_ponto - posicao_atual;
-					model = translate(model,translacao);
-					posicao_atual += translacao;
-					glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-					ourShader.setMat4("model", model);
-					ourModel.Draw(ourShader);
-					glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
-					glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
-
+				else {
+					bez = 0.0;
 				}
-				*/
+
+				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
+
+				for (int i = 0; i < matrixModel.size(); i++) {
+					ourShader.setMat4("model", matrixModel[i]);
+					ourModel.Draw(ourShader);
+				}
+
+				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
+				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
+			} while (currentTime <= (tempoInicial + 0.01));
+				lastTime = currentTime;
 
 		}
 		if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
@@ -369,19 +357,17 @@ int main()
 
 		}
 
-	/*	//if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
-		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS  && (currentTime - lastTime) > 1) { //new
+		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS  && (currentTime - lastTime) > 1) { //new cam
 
-			matrixProjection.push_back(glm::mat4(1.0));
-			matrixView.push_back(glm::mat4(1.0));
+			Camera cam = glm::vec3(0.0f, 0.0f, 3.0f);
+			matrixCam.push_back(cam);
 			lastTime = currentTime;
-			idCam = (matrixProjection.size() - 1);
-			matrixProjection.push_back(glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f));
-			matrixView.push_back(camera.GetViewMatrix());
+			idCam = (matrixCam.size() - 1);
+
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS && (currentTime - lastTime) > 1) { //idCam ++
-			if ((idCam + 1) >= matrixProjection.size()) {
+			if ((idCam + 1) >= matrixCam.size()) {
 				idCam = 0;
 			}
 			else {
@@ -392,13 +378,13 @@ int main()
 
 		if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS && (currentTime - lastTime) > 1) { //idCam --
 			if ((idCam - 1) <= 0) {
-				idCam = matrixProjection.size() - 1;
+				idCam = matrixCam.size() - 1;
 			}
 			else {
 				idCam--;
 			}
 			lastTime = currentTime;
-		}*/
+		}
 
 		//printar objetos
 		//ourShader.setMat4("model", model);
@@ -418,7 +404,7 @@ int main()
     // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
-}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -427,13 +413,13 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // verifica naquele meio de comunicaçao se determinado evento foi acionado
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
+		matrixCam[idCam].ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
+		matrixCam[idCam].ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
+		matrixCam[idCam].ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+		matrixCam[idCam].ProcessKeyboard(RIGHT, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -462,12 +448,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+	matrixCam[0].ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(yoffset);
+	matrixCam[0].ProcessMouseScroll(yoffset);
 }

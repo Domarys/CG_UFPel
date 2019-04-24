@@ -314,18 +314,11 @@ int main()
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && (currentTime - lastTime) > 1) {
-			double step, delta, tempoInicial=glfwGetTime();
 
-
-			do {
-				currentTime = glfwGetTime();
-				delta = currentTime - lastTime;
-				step = (0.002 * delta) / 5;
-				std::cout << "aaaaaaaallllllllllllllloooooooooooo" << endl;
 				if (bez <= 1.0) {
 					glm::vec3 b = glm::catmullRom(
 						glm::vec3(matrixModel[idModel][0][0], matrixModel[idModel][1][1] - 5, matrixModel[idModel][2][2]),
-						glm::vec3(matrixModel[idModel][0][0], matrixModel[idModel][1][1], matrixModel[idModel][0][0]),
+						glm::vec3(matrixModel[idModel][0][0], matrixModel[idModel][1][1], matrixModel[idModel][2][0]),
 						glm::vec3(matrixModel[idModel][0][0] + 1.0, matrixModel[idModel][1][1], matrixModel[idModel][2][2]),
 						glm::vec3(matrixModel[idModel][0][0], matrixModel[idModel][1][1], matrixModel[idModel][2][2]),
 						bez);
@@ -337,19 +330,6 @@ int main()
 				else {
 					bez = 0.0;
 				}
-
-				glClearColor(0.4f, 0.02f, 0.5f, 0.5f); // aplica uma única cor em toda tela GLFW
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // limpa os buffers
-
-				for (int i = 0; i < matrixModel.size(); i++) {
-					ourShader.setMat4("model", matrixModel[i]);
-					ourModel.Draw(ourShader);
-				}
-
-				glfwSwapBuffers(window); // troca de buffers para que somente o pronto seja exibido
-				glfwPollEvents(); // verifica a ocorrência de interações do usuário com a janela
-			} while (currentTime <= (tempoInicial + 0.01));
-				lastTime = currentTime;
 
 		}
 		if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
@@ -385,6 +365,21 @@ int main()
 			}
 			lastTime = currentTime;
 		}
+		if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS && (currentTime - lastTime) > 1) {// translacao -x 
+			//glm::mat4 aux(matrixCam[idCam].Position.x, 0, 0, 0, 0, matrixCam[idCam].Position.y, 0, 0, 0, 0, matrixCam[idCam].Position.z, 0, 0, 0, 0, 1);
+			glm::mat4 aux;
+			aux[3][0] = matrixCam[idCam].Position.x;
+			aux[3][1] = matrixCam[idCam].Position.y;
+			aux[3][2] = matrixCam[idCam].Position.z;;
+
+			aux = glm::translate(aux, glm::vec3(-0.2f, 0.0f, 0.0f));
+			matrixCam[idCam].Position.x = aux[3][0];
+			matrixCam[idCam].Position.y = aux[3][1];
+			matrixCam[idCam].Position.z = aux[3][2];
+			lastTime = currentTime;
+
+		}
+
 
 		//printar objetos
 		//ourShader.setMat4("model", model);
